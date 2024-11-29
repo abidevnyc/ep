@@ -1,0 +1,43 @@
+name: Obfuscate Code
+
+on:
+  push:
+    paths:
+      - "src/worker.js" # 监听目标文件的变更
+
+jobs:
+  obfuscate:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 检出代码仓库
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # 设置 Node.js 环境
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    # 安装 UglifyJS
+    - name: Install UglifyJS
+      run: npm install -g uglify-js
+
+    # 运行混淆
+    - name: Obfuscate Code
+      run: |
+        mkdir -p dist
+        uglifyjs src/worker.js --compress --mangle --output dist/worker.min.js
+
+    # 提交混淆后的代码到仓库
+    - name: Commit and push changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        cp dist/worker.min.js src/worker.min.js
+        git add src/worker.min.js
+        git commit -m "Obfuscated worker.js automatically"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
